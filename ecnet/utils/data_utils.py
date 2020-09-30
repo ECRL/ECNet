@@ -104,6 +104,11 @@ class DataFrame:
                    len(self.data_points)), call_loc='DF')
         logger.log('debug', 'Input parameters/entry: {}'.format(
                    len(self._input_names)), call_loc='DF')
+        if len(self._input_names) == 0:
+            logger.log(
+                'warn',
+                'No input parameters found! Check database format.'
+            )
         logger.log('debug', 'Target values/entry: {}'.format(
                    len(self._target_names)), call_loc='DF')
 
