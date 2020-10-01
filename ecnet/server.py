@@ -70,7 +70,8 @@ class Server:
             save_config(self._vars, self._cf_file)
 
     def load_data(self, filename: str, random: bool = False,
-                  split: list = None, normalize: bool = False):
+                  split: list = None, normalize: bool = False,
+                  transform: bool = False, tf_var_ratio: float = 0.99):
         '''Loads data from an ECNet-formatted CSV database
 
         Args:
@@ -80,6 +81,9 @@ class Server:
             split (list): if random is True, [learn%, valid%, test%]
             normalize (bool): if true, uses min-max normalization to normalize
                 input parameters between 0 and 1
+            transform (bool): if true, performs PCA on input data
+            tf_var_ratio (float): [0.0, 1.0]; proportion of information to
+                retain during PCA
         '''
 
         logger.log('info', 'Loading data from {}'.format(filename),
@@ -87,6 +91,7 @@ class Server:
         self._df = DataFrame(filename)
         if normalize:
             self._df.normalize()
+        # TODO: perform PCA
         self._df.create_sets(random, split)
         self._sets = self._df.package_sets()
 

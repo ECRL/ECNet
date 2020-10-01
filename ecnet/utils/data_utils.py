@@ -244,6 +244,11 @@ class DataFrame:
                         (float(getattr(pt, inp)) - v_min) / (v_max - v_min)
                     )
 
+    def transform(self, tf_var_ratio: float = 0.99):
+
+        # TODO: perform PCA on input data
+        return
+
     def shuffle(self, sets: str = 'all', split: list = [0.7, 0.2, 0.1]):
         '''Shuffles learning, validation and test sets or learning and
         validation sets
