@@ -134,6 +134,20 @@ class TestDataUtils(unittest.TestCase):
         )
         remove('cn_test_save.csv')
 
+    def test_transform(self):
+
+        print('\nUNIT TEST: PCA transformation')
+        df = data_utils.DataFrame(DB_LOC)
+        df.normalize()
+        df.create_sets(random=True, split=[0.7, 0.2, 0.1])
+        var_ratio = round(df.transform(tf_var_ratio=0.99), 2)
+        self.assertGreaterEqual(var_ratio, 0.99)
+        df = data_utils.DataFrame(DB_LOC)
+        df.normalize()
+        df.create_sets(random=True, split=[0.7, 0.2, 0.1])
+        var_ratio = round(df.transform(tf_var_ratio=0.95), 2)
+        self.assertGreaterEqual(var_ratio, 0.95)
+
 
 if __name__ == '__main__':
 

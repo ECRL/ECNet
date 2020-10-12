@@ -71,7 +71,8 @@ class Server:
 
     def load_data(self, filename: str, random: bool = False,
                   split: list = None, normalize: bool = False,
-                  transform: bool = False, tf_var_ratio: float = 0.99):
+                  transform: bool = False, tf_var_ratio: float = 0.99,
+                  tf_fit_set: str = 'train'):
         '''Loads data from an ECNet-formatted CSV database
 
         Args:
@@ -84,6 +85,8 @@ class Server:
             transform (bool): if true, performs PCA on input data
             tf_var_ratio (float): [0.0, 1.0]; proportion of information to
                 retain during PCA
+            tf_fit_set (str): set to use to fit PCA (default `train`, i.e.
+                learn + valid)
         '''
 
         logger.log('info', 'Loading data from {}'.format(filename),
@@ -91,8 +94,9 @@ class Server:
         self._df = DataFrame(filename)
         if normalize:
             self._df.normalize()
-        # TODO: perform PCA
         self._df.create_sets(random, split)
+        if transform:
+            return
         self._sets = self._df.package_sets()
 
     def create_project(self, project_name: str, num_pools: int = 1,

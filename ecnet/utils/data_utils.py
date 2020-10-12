@@ -14,6 +14,7 @@ from random import sample
 
 # 3rd party imports
 from numpy import array, asarray
+from sklearn.decomposition import PCA
 
 # ECNet imports
 from ecnet.utils.logging import logger
@@ -111,6 +112,7 @@ class DataFrame:
             )
         logger.log('debug', 'Target values/entry: {}'.format(
                    len(self._target_names)), call_loc='DF')
+        self._sets_created = False
 
     def __len__(self):
         '''DataFrame length == number of DataPoints'''
@@ -171,6 +173,7 @@ class DataFrame:
                    len(self.valid_set)), call_loc='DF')
         logger.log('debug', 'Number of entries in test set: {}'.format(
                    len(self.test_set)), call_loc='DF')
+        self._sets_created = True
 
     def create_sorted_sets(self, sort_str: str, split: list = [0.7, 0.2, 0.1]):
         '''Creates random learn, validate and test sets, ensuring data points
@@ -226,6 +229,7 @@ class DataFrame:
                    len(self.valid_set)), call_loc='DF')
         logger.log('debug', 'Number of entries in test set: {}'.format(
                    len(self.test_set)), call_loc='DF')
+        self._sets_created = True
 
     def normalize(self):
         '''Normalize input data (min-max, between 0 and 1)'''
@@ -244,10 +248,43 @@ class DataFrame:
                         (float(getattr(pt, inp)) - v_min) / (v_max - v_min)
                     )
 
-    def transform(self, tf_var_ratio: float = 0.99):
+    def transform(self, tf_var_ratio: float = 0.99,
+                  tf_fit_set: str = 'train') -> float:
 
-        # TODO: perform PCA on input data
-        return
+        if not self._sets_created:
+            raise RuntimeError('Must create sets before transforming!')
+        fit_set = []
+        if tf_fit_set == 'learn':
+            fit_set.extend(self.learn_set)
+        elif tf_fit_set == 'valid':
+            fit_set.extend(self.valid_set)
+        elif tf_fit_set == 'test':
+            fit_set.extend(self.test_set)
+        elif tf_fit_set == 'train':
+            fit_set.extend(self.learn_set)
+            fit_set.extend(self.valid_set)
+        else:
+            fit_set.extend(self.learn_set)
+            fit_set.extend(self.valid_set)
+            fit_set.extend(self.test_set)
+        fit_inp = [[getattr(pt, inp) for inp in self._input_names]
+                   for pt in fit_set]
+        for nc in range(1, min(len(fit_inp), len(self._input_names)), 5):
+            n_comp = nc
+            pca = PCA(n_components=nc, svd_solver='randomized',
+                      whiten=True).fit(fit_inp)
+            var_ratio = sum([r for r in pca.explained_variance_ratio_])
+            if var_ratio >= tf_var_ratio:
+                break
+        old_inp_names = [n for n in self._input_names]
+        self._input_names = ['PC{}'.format(i + 1) for i in range(nc)]
+        for pt in self.data_points:
+            trf_vals = pca.transform(
+                [[getattr(pt, inp) for inp in old_inp_names]]
+            )
+            for idx, n in enumerate(self._input_names):
+                setattr(pt, n, trf_vals[0][idx])
+        return var_ratio
 
     def shuffle(self, sets: str = 'all', split: list = [0.7, 0.2, 0.1]):
         '''Shuffles learning, validation and test sets or learning and
@@ -263,6 +300,8 @@ class DataFrame:
         if sets == 'all':
             self.create_sets(random=True, split=split)
         elif sets == 'train':
+            if not self._sets_created:
+                raise RuntimeError('Must create sets before shuffling!')
             lv_set = []
             lv_set.extend([p for p in self.learn_set])
             lv_set.extend([p for p in self.valid_set])
@@ -293,6 +332,8 @@ class DataFrame:
                 and targets
         '''
 
+        if not self._sets_created:
+            raise RuntimeError('Must create sets before packaging!')
         pd = PackagedData()
         for point in self.learn_set:
             pd.learn_x.append(asarray(
