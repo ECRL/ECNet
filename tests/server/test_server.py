@@ -121,6 +121,19 @@ class TestServer(unittest.TestCase):
         remove('config.yml')
         rmtree('test_project')
 
+    def test_transform(self):
+
+        print('\nUNIT TEST: PCA transformation')
+        sv = Server()
+        sv.load_data(DB_LOC, normalize=True, random=True,
+                     split=[0.7, 0.2, 0.1], transform=True)
+        for inp in sv._df._input_names:
+            self.assertTrue('PC' in inp)
+        n_inp = len(sv._df._input_names)
+        self.assertEqual(n_inp, len(sv._sets.learn_x[0]))
+        self.assertEqual(n_inp, len(sv._sets.valid_x[0]))
+        self.assertEqual(n_inp, len(sv._sets.test_x[0]))
+
 
 if __name__ == '__main__':
 

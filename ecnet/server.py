@@ -96,7 +96,7 @@ class Server:
             self._df.normalize()
         self._df.create_sets(random, split)
         if transform:
-            return
+            self._df.transform(tf_var_ratio, tf_fit_set)
         self._sets = self._df.package_sets()
 
     def create_project(self, project_name: str, num_pools: int = 1,

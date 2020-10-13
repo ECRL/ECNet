@@ -249,10 +249,25 @@ class DataFrame:
                     )
 
     def transform(self, tf_var_ratio: float = 0.99,
-                  tf_fit_set: str = 'train') -> float:
+                  tf_fit_set: str = 'train') -> tuple:
+        '''Transforms input data using PCA; fits PCA using specified set,
+        transforms all sets after PCA is fit
+
+        Args:
+            tf_var_ratio (float): desired variance to be accounted for in PCs;
+                uses minimum number of PCs required to obtain this accounted-
+                for variance
+            tf_fit_set (str): which set to fit PCA with; `learn`, `valid`,
+                `test`, `train`, None; default `train` (learn + valid)
+
+        Returns:
+            tuple: (number of PCs, achieved variance ratio)
+        '''
 
         if not self._sets_created:
             raise RuntimeError('Must create sets before transforming!')
+        logger.log('debug', 'Transforming data using PCA', call_loc='DF')
+        logger.log('debug', 'Fitting PCA using `{}` set'.format(tf_fit_set))
         fit_set = []
         if tf_fit_set == 'learn':
             fit_set.extend(self.learn_set)
@@ -263,10 +278,12 @@ class DataFrame:
         elif tf_fit_set == 'train':
             fit_set.extend(self.learn_set)
             fit_set.extend(self.valid_set)
-        else:
+        elif tf_fit_set is None:
             fit_set.extend(self.learn_set)
             fit_set.extend(self.valid_set)
             fit_set.extend(self.test_set)
+        else:
+            raise RuntimeError('Unknown set `{}`'.format(tf_fit_set))
         fit_inp = [[getattr(pt, inp) for inp in self._input_names]
                    for pt in fit_set]
         for nc in range(1, min(len(fit_inp), len(self._input_names)), 5):
@@ -276,15 +293,18 @@ class DataFrame:
             var_ratio = sum([r for r in pca.explained_variance_ratio_])
             if var_ratio >= tf_var_ratio:
                 break
-        old_inp_names = [n for n in self._input_names]
-        self._input_names = ['PC{}'.format(i + 1) for i in range(nc)]
+        pc_names = ['PC{}'.format(i + 1) for i in range(n_comp)]
         for pt in self.data_points:
             trf_vals = pca.transform(
-                [[getattr(pt, inp) for inp in old_inp_names]]
+                [[getattr(pt, inp) for inp in self._input_names]]
             )
-            for idx, n in enumerate(self._input_names):
+            for idx, n in enumerate(pc_names):
                 setattr(pt, n, trf_vals[0][idx])
-        return var_ratio
+        self._input_names = pc_names
+        logger.log('debug', 'Num. PCs: {} | Var. Ratio: {}'.format(
+            n_comp, var_ratio
+        ))
+        return (n_comp, var_ratio)
 
     def shuffle(self, sets: str = 'all', split: list = [0.7, 0.2, 0.1]):
         '''Shuffles learning, validation and test sets or learning and

@@ -140,13 +140,18 @@ class TestDataUtils(unittest.TestCase):
         df = data_utils.DataFrame(DB_LOC)
         df.normalize()
         df.create_sets(random=True, split=[0.7, 0.2, 0.1])
-        var_ratio = round(df.transform(tf_var_ratio=0.99), 2)
+        var_ratio = round(df.transform(tf_var_ratio=0.99)[1], 2)
         self.assertGreaterEqual(var_ratio, 0.99)
         df = data_utils.DataFrame(DB_LOC)
         df.normalize()
         df.create_sets(random=True, split=[0.7, 0.2, 0.1])
-        var_ratio = round(df.transform(tf_var_ratio=0.95), 2)
+        var_ratio = round(df.transform(tf_var_ratio=0.95)[1], 2)
         self.assertGreaterEqual(var_ratio, 0.95)
+        df = data_utils.DataFrame(DB_LOC)
+        df.normalize()
+        df.create_sets(random=True, split=[0.7, 0.2, 0.1])
+        var_ratio = round(df.transform(tf_var_ratio=0.5)[1], 2)
+        self.assertGreaterEqual(var_ratio, 0.5)
 
 
 if __name__ == '__main__':
