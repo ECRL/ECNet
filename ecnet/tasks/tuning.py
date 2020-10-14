@@ -93,12 +93,12 @@ def tune_hyperparameters(df: DataFrame, vars: dict, num_employers: int,
         abc.search()
         new_best_ret = abc.best_ret_val
         new_best_params = abc.best_params
-        logger.log('info', 'Best Performer: {}, {}'.format(
-            new_best_ret, new_best_ret
-        ), call_loc='TUNE')
         if new_best_ret < best_ret_val:
             best_ret_val = new_best_ret
             best_params = new_best_params
+        logger.log('info', 'Best Performer: {}, {}'.format(
+            best_ret_val, best_params
+        ), call_loc='TUNE')
 
     vars['decay'] = best_params['decay']
     vars['learning_rate'] = best_params['learning_rate']
