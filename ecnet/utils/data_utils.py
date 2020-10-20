@@ -66,6 +66,9 @@ class DataFrame:
 
         self._filename = filename
 
+        self._norm_params = None
+        self._pca = None
+
         self.data_points = []
 
         self._string_names = []
@@ -234,10 +237,12 @@ class DataFrame:
     def normalize(self):
         '''Normalize input data (min-max, between 0 and 1)'''
 
+        self._norm_params = []
         for inp in self._input_names:
             vals = [float(getattr(pt, inp)) for pt in self.data_points]
             v_min = min(vals)
             v_max = max(vals)
+            self._norm_params.append((v_min, v_max))
             for pt in self.data_points:
                 if v_max - v_min == 0:
                     setattr(pt, inp, 0)
@@ -288,14 +293,14 @@ class DataFrame:
                    for pt in fit_set]
         for nc in range(1, min(len(fit_inp), len(self._input_names)), 5):
             n_comp = nc
-            pca = PCA(n_components=nc, svd_solver='randomized',
-                      whiten=True).fit(fit_inp)
-            var_ratio = sum([r for r in pca.explained_variance_ratio_])
+            self._pca = PCA(n_components=nc, svd_solver='randomized',
+                            whiten=True).fit(fit_inp)
+            var_ratio = sum([r for r in self._pca.explained_variance_ratio_])
             if var_ratio >= tf_var_ratio:
                 break
         pc_names = ['PC{}'.format(i + 1) for i in range(n_comp)]
         for pt in self.data_points:
-            trf_vals = pca.transform(
+            trf_vals = self._pca.transform(
                 [[getattr(pt, inp) for inp in self._input_names]]
             )
             for idx, n in enumerate(pc_names):
