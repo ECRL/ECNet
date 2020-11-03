@@ -272,7 +272,8 @@ class DataFrame:
         if not self._sets_created:
             raise RuntimeError('Must create sets before transforming!')
         logger.log('debug', 'Transforming data using PCA', call_loc='DF')
-        logger.log('debug', 'Fitting PCA using `{}` set'.format(tf_fit_set))
+        logger.log('debug', 'Fitting PCA using `{}` set'.format(tf_fit_set),
+                   call_loc='DF')
         fit_set = []
         if tf_fit_set == 'learn':
             fit_set.extend(self.learn_set)
@@ -308,7 +309,7 @@ class DataFrame:
         self._input_names = pc_names
         logger.log('debug', 'Num. PCs: {} | Var. Ratio: {}'.format(
             n_comp, var_ratio
-        ))
+        ), call_loc='DF')
         return (n_comp, var_ratio)
 
     def shuffle(self, sets: str = 'all', split: list = [0.7, 0.2, 0.1]):
